@@ -92,7 +92,7 @@
 1. 创建 `/etc/systemd/system/rpicam-rtsp.service`：
    ```ini
    [Unit]
-   Description=RPi Cam RTSP push (1080p) via rpicam-vid + ffmpeg
+   Description=RPi Cam RTSP push (720p ultra-low-latency)
    After=network-online.target mediamtx.service
    Wants=network-online.target mediamtx.service
 
@@ -100,9 +100,9 @@
    Type=simple
    User=root
    WorkingDirectory=/home/pi
-   ExecStart=/bin/bash -lc "rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --width 1920 --height 1080 --framerate 30 -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport tcp -muxdelay 0.1 -muxpreload 0.1 rtsp://127.0.0.1:8554/cam"
+   ExecStart=/bin/bash -lc "rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --intra 1 --inline --width 1280 --height 720 --framerate 25 --libav-video-codec h264_v4l2m2m -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -fflags flush_packets -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport udp -muxdelay 0 -muxpreload 0 rtsp://127.0.0.1:8554/cam"
    Restart=always
-   RestartSec=2
+   RestartSec=1
    LimitNOFILE=65536
 
    [Install]
@@ -123,6 +123,22 @@
    ```
 
 > 该服务与 `mediamtx.service` 建立依赖关系，确保开机后自动启动推流。若需要修改分辨率或帧率，直接编辑单元文件中的 `ExecStart`。
+
+### 超低延迟优化建议（最终配置）
+
+- 编码侧：
+  - `--low-latency` 启用低延迟编码路径。
+  - `--intra 1` **（关键）** 将关键帧间隔设为 1，最大程度减少解码器等待时间，是实现亚秒级延迟的核心。这会增加带宽，但对延迟改善效果最显著。
+  - `--inline` 确保 I 帧附带 SPS/PPS 头信息。
+  - `--width 1280 --height 720 --framerate 25` 降低分辨率和帧率可显著减轻硬件编码压力。
+  - `--libav-video-codec h264_v4l2m2m` 使用硬件编码加速。
+- 封装与传输：
+  - `ffmpeg` 使用 `-fflags nobuffer -flags low_delay -fflags flush_packets` 减少缓冲。
+  - `-rtsp_transport udp` **（关键）** 在局域网等可靠网络下，使用 UDP 替代 TCP 可避免重传导致的延迟累积。
+  - `-muxdelay 0 -muxpreload 0` 进一步减少复用器的缓冲。
+- 客户端：
+  - 优先使用 **WebRTC** 协议播放（访问 `http://<树莓派IP>:8889/cam`），它是实现最低延迟的首选。
+  - 若使用 VLC 等 RTSP 客户端，务必将其内部的网络缓存（caching）时间调至最低（如 100ms）。
 
 3. 在局域网客户端播放（VLC/FFplay/NVR 等）：
    ```
