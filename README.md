@@ -74,7 +74,7 @@
 2. 通过 `rpicam-vid` 采集并使用 `ffmpeg` 推送到 RTSP（路径名示例：`cam`）：
    ```bash
    # 720p@25，低延迟参数，使用 TCP 传输
-   sudo rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --intra 1 --inline --width 1280 --height 720 --framerate 25 --libav-video-codec h264_v4l2m2m -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -fflags flush_packets -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport udp -muxdelay 0 -muxpreload 0 rtsp://127.0.0.1:8554/cam
+   sudo rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --intra 1 --inline --width 1280 --height 720 --framerate 25 -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -fflags flush_packets -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport udp -muxdelay 0 -muxpreload 0 rtsp://127.0.0.1:8554/cam
    ```
 
    说明：
@@ -96,7 +96,7 @@
    Type=simple
    User=root
    WorkingDirectory=/home/pi
-   ExecStart=/bin/bash -lc "rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --intra 1 --inline --width 1280 --height 720 --framerate 25 --libav-video-codec h264_v4l2m2m -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -fflags flush_packets -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport udp -muxdelay 0 -muxpreload 0 rtsp://127.0.0.1:8554/cam"
+   ExecStart=/bin/bash -lc "rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --intra 1 --inline --width 1280 --height 720 --framerate 25 -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -fflags flush_packets -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport udp -muxdelay 0 -muxpreload 0 rtsp://127.0.0.1:8554/cam"
    Restart=always
    RestartSec=1
    LimitNOFILE=65536
