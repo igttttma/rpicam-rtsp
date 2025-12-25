@@ -73,12 +73,8 @@
 
 2. 通过 `rpicam-vid` 采集并使用 `ffmpeg` 推送到 RTSP（路径名示例：`cam`）：
    ```bash
-   # 1080p@30，低延迟参数，使用 TCP 传输
-   sudo rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 \
-     --low-latency --width 1920 --height 1080 --framerate 30 -o - \
-     | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -an -f h264 -i - \
-       -c:v copy -f rtsp -rtsp_transport tcp -muxdelay 0.1 -muxpreload 0.1 \
-       rtsp://127.0.0.1:8554/cam
+   # 720p@25，低延迟参数，使用 TCP 传输
+   sudo rpicam-vid -t 0 --nopreview --codec libav --libav-format h264 --low-latency --intra 1 --inline --width 1280 --height 720 --framerate 25 --libav-video-codec h264_v4l2m2m -o - | ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -fflags flush_packets -an -f h264 -i - -c:v copy -f rtsp -rtsp_transport udp -muxdelay 0 -muxpreload 0 rtsp://127.0.0.1:8554/cam
    ```
 
    说明：
